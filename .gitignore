@@ -11,3 +11,4 @@ frontend/playwright-report/
 frontend/e2e-results.json
 media/*.mp4
 frontend/scripts/capture-video-shots.mjs.bak
+frontend/.vite/
