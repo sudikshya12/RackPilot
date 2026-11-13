@@ -1,0 +1,9 @@
+00|Introducing RackOps Lab.
+01|One calm view of your entire lab. Health, incidents, acceptance, and spares, all computed from real records.
+02|When a service fails, it's detected in seconds, and you see exactly where.
+03|Every piece of evidence is captured, timestamped, and kept separate from the diagnosis.
+04|And recovery isn't a button. A wrong fix fails verification. Only proven recovery resolves the incident.
+05|New servers are measured against their build sheet. Mismatches fail. Corrections are recorded. And every re-test becomes a new, permanent record.
+06|Explore every rack, and trace any cable, end to end, through every patch panel.
+07|Reserve the right spare, record the swap, and return the failed part, with a complete audit trail.
+08|RackOps Lab. Every number labeled. Every action accounted for.
