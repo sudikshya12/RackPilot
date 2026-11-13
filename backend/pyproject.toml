@@ -1,0 +1,28 @@
+[project]
+name = "rackops-lab"
+version = "0.1.0"
+description = "RackOps Lab backend - independent data center operations interview lab"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic==1.14.*",
+    "fastapi==0.115.*",
+    "httpx==0.28.*",
+    "jinja2==3.1.*",
+    "pydantic==2.10.*",
+    "pydantic-settings==2.6.*",
+    "python-multipart==0.0.20",
+    "sqlalchemy==2.0.*",
+    "uvicorn[standard]==0.32.*",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
