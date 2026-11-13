@@ -1,104 +1,306 @@
+<div align="center">
+
 # RackOps Lab
 
-**An independent interview lab for data center operations.** It is a working, locally runnable tool with three projects that share one modeled lab:
+**Data center operations, made precise.**
 
-| # | Project | What it demonstrates | Guided demo |
-|---|---------|----------------------|-------------|
-| 1 | **Incident Detection & Recovery** | Deterministic fault → detection → evidence → hypotheses → repair → **verification gate** → post-incident summary | Restore a failed service |
-| 2 | **Server Intake & Acceptance** | Expected-vs-observed checks, FAIL vs MANUAL REVIEW rules, immutable runs, re-test diff, printable report | Reject and re-test a misconfigured server |
-| 3 | **Rack, Cabling & Asset Lifecycle** | Rack elevation, cable trace, power-independence analysis, transactional spares, RMA, full audit trail | Replace a failed PSU and reconcile inventory |
+Detect failures, prove recovery, accept hardware against its build sheet, and keep every rack, cable and spare part accounted for. One working application, one shared lab model.
 
-> This is an independent interview lab, not a production system, and it is not affiliated with any employer. All names, serial numbers and addresses are synthetic. Every measurement is labeled **SIMULATED**, **LOCAL LAB** or **IMPORTED SAMPLE**, and these sources are never combined in one aggregate.
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
+
+[**Product tour**](#product-tour) · [**Features**](#what-it-does) · [**Architecture**](#architecture) · [**Quick start**](#quick-start) · [**Demos**](#guided-demonstrations) · [**Docs**](#documentation)
+
+<br/>
+
+<img src="docs/images/overview.jpg" alt="RackOps Lab operations overview with the product tour hero, health metrics, rack elevation and needs-attention list" width="100%"/>
+
+</div>
+
+<br/>
+
+> [!NOTE]
+> RackOps Lab is an independent lab project. All lab data is **synthetic**, and every measurement is labeled **SIMULATED**, **LOCAL LAB** or **IMPORTED SAMPLE**. Sources are never mixed into a single number.
 
 ---
 
-## Quick start (local, no accounts needed)
+## Product tour
 
-Prerequisites: Python 3.12 with [uv](https://docs.astral.sh/uv/), and Node 20+.
+<a href="frontend/public/media/rackops-tour.mp4">
+  <img src="frontend/public/media/rackops-tour-poster.jpg" alt="Watch the 70-second RackOps Lab product tour" width="100%"/>
+</a>
+
+<p align="center"><sub>▶ 70-second film of the real app (1080p, captions). It also plays from the hero on the app's homepage.</sub></p>
+
+---
+
+## What it does
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 🚨 Incident Detection & Recovery
+A failed service is detected by deterministic probes, investigated with captured evidence, and resolved **only after verification passes**. A plausible wrong fix fails verification and goes back to investigation.
+
+</td>
+<td width="33%" valign="top">
+
+### ✅ Server Intake & Acceptance
+New servers are measured against their expected configuration through ten modular checks. Required failures **fail**; missing evidence goes to **manual review**; every re-test is a new, immutable run.
+
+</td>
+<td width="33%" valign="top">
+
+### 🗄️ Rack, Cabling & Asset Lifecycle
+An interactive rack elevation, end-to-end cable traces, power-independence analysis, and a **transactional** reserve → consume → return workflow with a complete audit trail.
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/incident.jpg" alt="Incident workspace with timeline, evidence and hypotheses"/><p align="center"><sub><b>Investigation workspace</b>: timeline, evidence, hypotheses, runbook</sub></p></td>
+<td width="50%"><img src="docs/images/acceptance.jpg" alt="Acceptance run comparison showing FAIL then PASS"/><p align="center"><sub><b>Acceptance re-test</b>: FAIL → recorded corrections → PASS</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/repair.jpg" alt="Spare parts repair workflow with compatibility and ledger"/><p align="center"><sub><b>Repair workflow</b>: compatible spare, reserve, consume, return</sub></p></td>
+<td width="50%"><img src="docs/images/cable-trace.jpg" alt="Cable trace through a patch panel"/><p align="center"><sub><b>Cable trace</b>: server → patch panel → switch, with a text path</sub></p></td>
+</tr>
+</table>
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+    UI["React SPA<br/>dashboard · workflows · rack elevation"]
+    SRC["Data sources<br/>simulator · live-lab target<br/>Redfish · Linux collector"]
+
+    subgraph API["FastAPI backend"]
+        RT["REST API<br/>typed schemas · OpenAPI"]
+        JR["Job runner<br/>1 s tick"]
+        SV["Domain services<br/>incidents · acceptance<br/>topology · inventory"]
+        EV["Event stream<br/>SSE · Last-Event-ID replay"]
+    end
+
+    DB[("SQLite · WAL<br/>Alembic migrations")]
+
+    UI -- "HTTP / JSON" --> RT
+    SRC --> JR
+    RT --> SV
+    JR --> SV
+    SV --> DB
+    SV --> EV
+    EV -. "live updates" .-> UI
+```
+
+| Layer | Responsibility |
+|---|---|
+| **Domain services** | Every rule lives server-side: lifecycle transitions, verification gate, disposition logic, compatibility checks, ledger math. |
+| **Job runner** | Advances simulations, executes acceptance checks a few at a time, and probes the optional live-lab target. |
+| **Event stream** | Every change writes a persisted event; clients resume from `Last-Event-ID`, so nothing is missed after a reconnect. |
+| **Provenance** | Each measurement and evidence row stores `source_type`, `source_id`, a timestamp and its simulation run. |
+
+---
+
+## How the workflows behave
+
+### Incident lifecycle
+
+Resolution is gated on a **passing verification executed after the most recent repair**. Pressing a button never proves recovery.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Repair applied" as RepairApplied
+    [*] --> Detected: 2 consecutive failed probes
+    Detected --> Acknowledged
+    Acknowledged --> Investigating
+    Investigating --> RepairApplied: record corrective action
+    RepairApplied --> Verification: run checks
+    Verification --> Investigating: checks fail
+    Verification --> Resolved: checks pass
+    Resolved --> Investigating: reopen (history kept)
+```
+
+### Acceptance decision
+
+```mermaid
+flowchart TD
+    A["Intake record<br/>expected CPU, memory, storage, NICs, link speed"] --> B["Snapshot observations"]
+    B --> C["Run 10 modular checks"]
+    C --> D{"Any required check FAIL?"}
+    D -- yes --> F["FAIL"]
+    D -- no --> E{"Any required check unsupported,<br/>skipped, errored or unreviewed?"}
+    E -- yes --> M["MANUAL REVIEW"]
+    E -- no --> P["PASS<br/>provisioning handoff checklist"]
+    F --> X["Record correction"]
+    X --> R["Re-test creates a new immutable run"]
+    R --> C
+    M --> V["Reviewer decision recorded<br/>original result unchanged"]
+```
+
+### Component replacement
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Op as Operator
+    participant Inc as Incident
+    participant Inv as Spare inventory
+    participant Ret as Returns
+    Op->>Inc: Review PSU2 evidence from Redfish, SEL and PDU
+    Op->>Inv: Reserve a compatible spare
+    Note over Inv: available decreases, on-hand unchanged
+    Op->>Inv: Consume reservation in one transaction
+    Inv-->>Inc: Repair recorded on the incident
+    Inv-->>Ret: Failed PSU quarantined
+    Op->>Ret: Open return record
+    Op->>Inc: Verify health, then resolve
+    Note over Op,Ret: Every step is written to the audit trail
+```
+
+---
+
+## Engineering highlights
+
+| | |
+|---|---|
+| 🧮 **Ledger-derived stock** | On-hand = sum of inventory transactions; available = on-hand − active reservations. No counters to drift. |
+| 🔒 **Transactional writes** | Inventory mutations run in `BEGIN IMMEDIATE` transactions, so a stock check and the write can't race. |
+| 🔁 **Idempotency keys** | Reserve, consume and run-start accept an `Idempotency-Key`; a retried request can't double-consume stock. |
+| 🧾 **Immutable runs** | Acceptance runs snapshot the expected config, profile and observations; reports render from the stored run. |
+| 🎯 **Deterministic simulation** | Fixed sequences, no random numbers: the same drill always produces the same evidence and timings. |
+| 🧹 **Isolated reset** | Demo reset removes only simulation-owned records; imported and local-lab evidence is never touched. |
+| 🔌 **Honest integrations** | Redfish is GET-only with TLS verification on; unconfigured integrations say so instead of faking success. |
+| ♿ **Accessible by default** | Status always has text, the rack has a table equivalent, keyboard navigation, reduced-motion support, WCAG AA contrast. |
+
+---
+
+## Quick start
+
+**Prerequisites:** Python 3.12 with [uv](https://docs.astral.sh/uv/) and Node.js 20+.
 
 ```bash
-# 1) Backend: API on http://127.0.0.1:8000 (OpenAPI docs at /api/docs)
+# 1. Backend: API on http://127.0.0.1:8000 (interactive docs at /api/docs)
 cd backend
 uv sync
 uv run alembic upgrade head
-uv run python -m app.seed            # repeatable; no-op if already seeded
+uv run python -m app.seed
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-# 2) Frontend: UI on http://127.0.0.1:5173 (proxies /api to the backend)
+```bash
+# 2. Frontend: app on http://127.0.0.1:5173
 cd frontend
 npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**. The home page is the operations dashboard. Use **Run demo** (or **Demonstrations** in the sidebar) to start a guided walkthrough. Project background and case studies are under **About & Documentation**.
-
-To rebuild the database from scratch (this deletes *all* records, including imported ones): `uv run python -m app.seed --reset`.
-To reset only the demo and drill data, use **Demonstrations → Reset all simulation data**. Imported and local-lab records are kept.
-
-### Docker Compose (alternative)
+<details>
+<summary><b>Docker Compose</b></summary>
 
 ```bash
-cp .env.example .env                               # optional
-docker compose up --build                          # UI at http://127.0.0.1:8080
-docker compose --profile monitoring up --build     # + Prometheus, Alertmanager, Node Exporter
+cp .env.example .env
+docker compose up --build                        # app on http://127.0.0.1:8080
+docker compose --profile monitoring up --build   # adds Prometheus, Alertmanager, Node Exporter
 ```
 
-All ports are published on `127.0.0.1` only. *Note: the Compose files were written and YAML-validated but not executed in the build environment, which had no Docker. See [docs/limitations.md](docs/limitations.md).*
+All ports are published on `127.0.0.1` only.
+</details>
+
+<details>
+<summary><b>Connect real lab equipment (optional)</b></summary>
+
+| Source | How |
+|---|---|
+| **Live service drill** | Settings → Live lab. The backend starts its own HTTP target on `127.0.0.1:18081`. Stopping it causes a real outage that real probes detect. |
+| **Linux server acceptance** | Run `python3 collectors/rackops_collect.py --data-iface eth1 > obs.json` on the machine (sudo adds SMART and dmesg), then upload it on the intake page. |
+| **Redfish BMC** | Set `RACKOPS_REDFISH_URL`, `_USERNAME`, `_PASSWORD` in `.env`. Read-only; no power or firmware actions exist. |
+| **Alertmanager** | Use the `monitoring` profile and set `RACKOPS_ALERTMANAGER_WEBHOOK_ENABLED=true` with a token. |
+</details>
 
 ---
 
-## The three demo journeys (2–3 minutes each)
+## Guided demonstrations
 
-Start any of them from **/demo**. A compact control bar at the bottom shows the step and progress, with **Next step**, **Pause**, an expandable step list (**View**, **Restart**), and **Exit** (Shift+N advances). When a demo finishes, the bar becomes a small dismissible card with **View results** and **Close**. Every step runs the real backend workflow, and progress is derived from stored records. You can also do each step by hand in the normal UI.
+Start any demo from **Demonstrations** in the sidebar. A compact control bar guides each step, and every step runs the real backend workflow.
 
-1. **Restore a failed service**: the baseline probes run, the simulator stops `inventory-api` on lab-srv-02, and two failed probes (3 s interval) raise INC-xxxx. Acknowledge it and collect evidence ("connection refused", unit `inactive (dead)` after SIGTERM, scripted `systemctl stop` in the journal). Then **try the wrong fix** (bounce eth1): verification FAILS and the incident returns to investigating. Start the unit, wait for 2 healthy post-repair probes, verify, resolve, and open the summary.
-2. **Reject and re-test**: lab-srv-06 is expected to have 128 GiB and a 10 Gb/s link. It is observed at 64 GiB and 1 Gb/s, so the run FAILS. Record two labeled *simulated* corrections. Run #2 PASSES as a new record, with run #1 kept unchanged. Compare them side by side, then open the HTML report and JSON export.
-3. **Replace a failed component**: PSU2 on lab-srv-04 goes Critical (Redfish-shaped fixture). Collect evidence: the feed is present, so it is not a feed problem. Find a compatible spare (NL-PSU-800P; the 550 W switch PSU is flagged as incompatible) and reserve it. Consuming the reservation is one atomic transaction covering the ledger, the replacement asset, the failed-part quarantine, and the incident repair. Open the return record, re-check health, resolve, and read the audit trail.
-
-The full 5-minute interview script, with talking points, is in [docs/demo-script.md](docs/demo-script.md).
+| Demo | Duration | What you see |
+|---|---|---|
+| **Restore a failed service** | ~2 min | Fault injected → detected in 3 s → evidence → wrong fix rejected by verification → correct fix → verified recovery → post-incident summary |
+| **Reject and re-test a server** | ~2 min | Expected 128 GiB / 10 Gb/s, observed 64 GiB / 1 Gb/s → FAIL → recorded corrections → PASS → side-by-side diff and printable report |
+| **Replace a failed component** | ~2 min | PSU2 fault → compatible spare → reserve → atomic consume → return record → health re-check → full audit trail |
 
 ---
 
-## Tests (executed during the build)
+## Testing
 
 ```bash
-cd backend && uv run pytest                # 40 passed: workflow + integrity tests
-cd frontend && npx vitest run              # 5 passed: component/format tests
-cd frontend && npx playwright test         # 47 passed: 3 demo journeys, reset isolation, completed-demo card,
-                                           #   dashboard metrics/links, legacy route redirect, no candidate text,
-                                           #   13 pages x 3 viewports with zero horizontal overflow, keyboard access
-cd frontend && npm run contrast            # WCAG AA check of the color tokens
+cd backend  && uv run pytest            # 40 workflow and integrity tests
+cd frontend && npx vitest run           # component and formatting tests
+cd frontend && npx playwright test      # demo journeys, routing, product tour, 13 pages × 3 viewports
+cd frontend && npm run contrast         # WCAG AA check of the color tokens
 ```
 
-Playwright starts its own isolated backend (port 8001, `backend/data/e2e.db`) and frontend (port 5174), and saves screenshots to `docs/screenshots/`. Results: [docs/test-results.md](docs/test-results.md).
+Playwright starts an isolated backend and frontend on separate ports with their own database.
 
 ---
 
-## Where things are
+## Project structure
 
-| Path | What |
-|------|------|
-| `backend/app/models.py` | Shared data model: 30+ tables with provenance, constraints, and indexes |
-| `backend/app/services/` | Incidents, simulation engine, scenarios, acceptance, topology, inventory, demos |
-| `backend/app/acceptance/checks.py` | Modular checks and disposition rules |
-| `backend/app/collectors/` | Simulated evidence, read-only Redfish adapter |
-| `backend/app/livelab/` | Optional **real** service-stop drill against a lab-owned process on 127.0.0.1 |
-| `backend/alembic/` | Migrations |
-| `collectors/rackops_collect.py` | Read-only Linux collector for real hardware (run by the operator, then upload the JSON) |
-| `frontend/src/` | React UI (pages, rack elevation, cable trace, demo dock) |
-| `docs/` | Architecture, data dictionary, simulation model, runbooks, case studies, demo script, limitations |
+```text
+RackPilot/
+├── backend/
+│   ├── app/
+│   │   ├── models.py            # shared data model with provenance and constraints
+│   │   ├── services/            # incidents, simulation, acceptance, topology, inventory, demos
+│   │   ├── acceptance/checks.py # modular checks and disposition rules
+│   │   ├── collectors/          # simulated evidence, read-only Redfish adapter
+│   │   ├── routers/             # REST API (OpenAPI at /api/docs)
+│   │   └── runner.py            # background job runner
+│   ├── alembic/                 # migrations
+│   └── tests/                   # pytest suite
+├── frontend/
+│   ├── src/pages/               # dashboard and workflow pages
+│   ├── src/components/          # rack elevation, cable trace, product tour, UI kit
+│   ├── public/media/            # product film, preview loop, captions
+│   └── e2e/                     # Playwright specs
+├── collectors/rackops_collect.py  # read-only Linux hardware collector
+├── docs/                        # architecture, runbooks, case studies, screenshots
+├── infra/                       # Prometheus and Alertmanager configuration
+├── media/source/                # scripts that render the product film
+└── docker-compose.yml
+```
 
-### Edit the candidate profile
-
-Go to **Settings → Candidate profile** in the UI. That holds the name, headline, summary, links, and the operator name recorded on actions. The author details appear only on **About & Documentation**, not in the operational interface. *Candidate contribution* and *Lessons learned* are edited on each case-study page (**/projects/…**). They are stored in the database and start empty on purpose: this portfolio does not generate personal reflections.
-
-### Connect real lab equipment (optional)
-
-* **Live service drill (real, LOCAL LAB):** go to Settings → Live lab and enable it. The backend starts its own tiny HTTP target on `127.0.0.1:18081`. "Stop target" causes a real outage, real probes detect it, and recovery is verified with real HTTP checks. Host services are never touched.
-* **Linux server acceptance:** on the machine under test, run `python3 collectors/rackops_collect.py --data-iface eth1 > obs.json`, ideally with `sudo` so SMART and dmesg are included. Upload the file on the intake page as *LOCAL LAB* and run with the *Uploaded Linux collector output* collector.
-* **Redfish BMC (read-only GETs):** set `RACKOPS_REDFISH_URL`, `_USERNAME` and `_PASSWORD` in `.env`. TLS verification is on by default. There are no power or firmware actions.
-* **Prometheus/Alertmanager:** use the `monitoring` Compose profile and set `RACKOPS_ALERTMANAGER_WEBHOOK_ENABLED=true` plus a token.
+---
 
 ## Documentation
 
-[Architecture](docs/architecture.md) · [Implementation plan & decisions](docs/implementation-plan.md) · [Data dictionary](docs/data-dictionary.md) · [Simulation model](docs/simulation-model.md) · [Technical walkthrough](docs/technical-walkthrough.md) · [Runbooks](docs/runbooks/) · [Case studies](docs/case-studies/) · [Demo script](docs/demo-script.md) · [Evidence export](docs/evidence-export.md) · [What the candidate should understand](docs/candidate-understanding.md) · [Known limitations](docs/limitations.md) · [Test results](docs/test-results.md)
+| Topic | |
+|---|---|
+| Architecture and decisions | [docs/architecture.md](docs/architecture.md) · [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Data model | [docs/data-dictionary.md](docs/data-dictionary.md) |
+| Simulation model | [docs/simulation-model.md](docs/simulation-model.md) |
+| Technical walkthrough | [docs/technical-walkthrough.md](docs/technical-walkthrough.md) |
+| Runbooks | [docs/runbooks/](docs/runbooks/) |
+| Case studies | [docs/case-studies/](docs/case-studies/) |
+| Demo script | [docs/demo-script.md](docs/demo-script.md) |
+| Evidence export | [docs/evidence-export.md](docs/evidence-export.md) |
+| Known limitations | [docs/limitations.md](docs/limitations.md) |
+| Test results | [docs/test-results.md](docs/test-results.md) |
+
+<br/>
+
+<div align="center">
+<sub>RackOps Lab · built with FastAPI, React and SQLite · demonstrated with simulated lab data</sub>
+</div>
