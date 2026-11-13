@@ -1,0 +1,38 @@
+# RackOps Lab: local single-user deployment. Ports are published on 127.0.0.1 only.
+#   docker compose up --build                       -> http://127.0.0.1:8080
+#   docker compose --profile monitoring up --build  -> adds Prometheus, Alertmanager, Node Exporter
+services:
+  api:
+    build: ./backend
+    env_file: [{ path: .env, required: false }]
+    environment:
+      RACKOPS_DATABASE_URL: "sqlite:////app/data/rackops.db"
+      RACKOPS_FRONTEND_ORIGIN: "http://127.0.0.1:8080"
+    volumes: ["rackops-data:/app/data"]
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 10s
+      retries: 6
+  web:
+    build: ./frontend
+    depends_on: { api: { condition: service_healthy } }
+    ports: ["127.0.0.1:8080:8080"]
+
+  node-exporter:
+    profiles: [monitoring]
+    image: prom/node-exporter:v1.8.2
+    ports: ["127.0.0.1:9100:9100"]
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v2.55.1
+    volumes: ["./infra/prometheus:/etc/prometheus:ro"]
+    ports: ["127.0.0.1:9090:9090"]
+  alertmanager:
+    profiles: [monitoring]
+    image: prom/alertmanager:v0.27.0
+    volumes: ["./infra/alertmanager:/etc/alertmanager:ro"]
+    ports: ["127.0.0.1:9093:9093"]
+
+volumes:
+  rackops-data:

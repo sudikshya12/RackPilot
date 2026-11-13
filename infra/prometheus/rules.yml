@@ -1,0 +1,13 @@
+groups:
+  - name: rackops-lab
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 30s
+        labels: { severity: critical }
+        annotations: { summary: "Node exporter target down", description: "Prometheus cannot scrape node-exporter." }
+      - alert: NodeFilesystemAlmostFull
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes) < 0.10
+        for: 2m
+        labels: { severity: major }
+        annotations: { summary: "Filesystem below 10% free" }

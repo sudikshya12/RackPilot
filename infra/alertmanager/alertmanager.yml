@@ -1,0 +1,10 @@
+# Sends alerts to the RackOps Lab webhook. The receiver is disabled in the API unless
+# RACKOPS_ALERTMANAGER_WEBHOOK_ENABLED=true. Put the same token in RACKOPS_ALERTMANAGER_WEBHOOK_TOKEN
+# and replace <token> below (do not commit real tokens).
+route: { receiver: rackops, group_wait: 10s, repeat_interval: 1h }
+receivers:
+  - name: rackops
+    webhook_configs:
+      - url: http://api:8000/api/integrations/alertmanager
+        send_resolved: true
+        http_config: { authorization: { type: Bearer, credentials: "<token>" } }
