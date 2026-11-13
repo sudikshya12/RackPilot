@@ -76,12 +76,12 @@ test("product tour: strip plays the film in a lightbox and can be dismissed", as
   await page.reload();
   const strip = page.getByRole("region", { name: "Product tour" });
   await expect(strip).toBeVisible();
-  await expect(strip.locator("video")).toHaveAttribute("src", "/media/rackops-teaser.mp4");
+  await expect(strip.locator("video")).toHaveAttribute("src", /\/media\/rackops-teaser\.mp4/);
   await strip.getByRole("button", { name: "Watch the film" }).click();
   const dialog = page.getByRole("dialog", { name: "RackOps Lab · Product tour" });
   await expect(dialog).toBeVisible();
   const video = dialog.locator("video");
-  await expect(video).toHaveAttribute("poster", "/media/rackops-tour-poster.jpg");
+  await expect(video).toHaveAttribute("poster", /\/media\/rackops-tour-poster\.jpg/);
   await expect(dialog.locator("track[kind=captions]")).toHaveCount(1);
   const head = await page.request.get("/media/rackops-tour.mp4", { headers: { Range: "bytes=0-1023" } });
   expect([200, 206]).toContain(head.status());

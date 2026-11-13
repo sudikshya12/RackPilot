@@ -5,14 +5,39 @@
   "buildCommand": "cd frontend && npx vite build",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "api/index.py": { "maxDuration": 60, "includeFiles": "backend/app/**" }
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "backend/app/**"
+    }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!api/|media/|assets/).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
-    { "source": "/media/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, immutable" }] },
-    { "source": "/api/events", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-transform" }] }
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/api/events",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-transform"
+        }
+      ]
+    }
   ]
 }

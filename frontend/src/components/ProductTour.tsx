@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
 
-const SRC = "/media/rackops-tour.mp4";
-const POSTER = "/media/rackops-tour-poster.jpg";
-const CAPTIONS = "/media/rackops-tour.en.vtt";
+// Bump MEDIA_V whenever media files change so browsers never reuse a stale cached response.
+const MEDIA_V = "?v=2";
+const SRC = `/media/rackops-tour.mp4${MEDIA_V}`;
+const POSTER = `/media/rackops-tour-poster.jpg${MEDIA_V}`;
+const CAPTIONS = `/media/rackops-tour.en.vtt${MEDIA_V}`;
 const KEY = "rackops-tour-dismissed";
 
 function readDismissed() {
@@ -25,8 +27,8 @@ export function useProductTour() {
   return { dismissed, dismiss, open, setOpen };
 }
 
-const TEASER = "/media/rackops-teaser.mp4";
-const TEASER_POSTER = "/media/rackops-teaser-poster.jpg";
+const TEASER = `/media/rackops-teaser.mp4${MEDIA_V}`;
+const TEASER_POSTER = `/media/rackops-teaser-poster.jpg${MEDIA_V}`;
 // Chapter start times inside the 12.6 s teaser loop (seconds).
 const CHAPTERS: [string, number][] = [["Detect", 0], ["Investigate", 2.75], ["Verify", 5.1], ["Accept", 7.45], ["Trace", 10.0]];
 const TEASER_LEN = 12.6;
