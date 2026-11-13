@@ -63,5 +63,13 @@ export function useEventStream(): { state: StreamState; lastEventAt: number | nu
     return () => { closed = true; es?.close(); if (timer.current) window.clearTimeout(timer.current); };
   }, [qc]);
 
+  // Fallback: when the stream is not live (e.g. between serverless reconnects), poll the views that matter.
+  useEffect(() => {
+    if (state === "live") return;
+    const keys = [["overview"], ["demo"], ["incidents"], ["incident"], ["racks"], ["intake"], ["run"], ["incident-series"]];
+    const t = window.setInterval(() => keys.forEach((k) => qc.invalidateQueries({ queryKey: k })), 3000);
+    return () => window.clearInterval(t);
+  }, [state, qc]);
+
   return { state, lastEventAt };
 }

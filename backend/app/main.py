@@ -39,6 +39,15 @@ app = FastAPI(
 )
 app.add_middleware(CORSMiddleware, allow_origins=[get_settings().frontend_origin], allow_methods=["*"], allow_headers=["*"])
 
+if get_settings().serverless:
+    @app.middleware("http")
+    async def _serverless_tick(request: Request, call_next):
+        # No background process exists on serverless hosts: advance due work before serving the request.
+        if request.url.path.startswith("/api/") and request.url.path != "/api/events":
+            from .runner import lazy_tick
+            await asyncio.to_thread(lazy_tick)
+        return await call_next(request)
+
 
 @app.exception_handler(DomainError)
 async def domain_error(_: Request, exc: DomainError):

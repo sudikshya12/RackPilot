@@ -112,3 +112,16 @@ async def runner_loop(stop: asyncio.Event) -> None:
             await asyncio.wait_for(stop.wait(), timeout=interval)
         except asyncio.TimeoutError:
             pass
+
+
+_last_lazy = {"t": 0.0}
+
+
+def lazy_tick(min_interval: float = 0.75) -> None:
+    """Serverless mode: advance simulations/acceptance at most every `min_interval` seconds."""
+    import time
+    now = time.monotonic()
+    if now - _last_lazy["t"] < min_interval:
+        return
+    _last_lazy["t"] = now
+    run_once()

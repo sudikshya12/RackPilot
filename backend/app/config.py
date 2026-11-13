@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Read-only public preview: disables every mutation and collection endpoint.
     public_preview: bool = False
 
+    # Hosted demo on a serverless platform (e.g. Vercel): no background runner, ephemeral SQLite in /tmp.
+    # Simulation work is driven by incoming requests and the event stream instead of a loop.
+    serverless: bool = False
+
     # Upload limits
     max_upload_bytes: int = 512 * 1024
 

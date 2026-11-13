@@ -141,6 +141,9 @@ export function SourceIndicator() {
               <div><dt className="font-medium text-ink">Simulated</dt><dd>Incidents, probes, evidence and acceptance hardware come from a deterministic simulator. Each item is labeled SIMULATED.</dd></div>
               <div><dt className="font-medium text-ink">Modeled rack</dt><dd>Racks, cabling and power are a synthetic documentation model, not discovered hardware.</dd></div>
               <div><dt className="font-medium text-ink">Local lab</dt><dd>{localSources.length ? `Connected: ${localSources.join(", ")}.` : "None connected."}</dd></div>
+              {settings.data?.mode === "hosted_demo" && (
+                <div><dt className="font-medium text-ink">Hosted demo</dt><dd>This online demo uses temporary data that may reset at any time. Run it locally for persistent data and the live-lab target.</dd></div>
+              )}
             </dl>
             <Link to="/settings" onClick={() => setOpen(false)} className="mt-3 inline-block font-medium text-accent-700 hover:underline">Configure sources</Link>
           </motion.div>

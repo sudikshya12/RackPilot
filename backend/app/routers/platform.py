@@ -277,7 +277,7 @@ def settings_view(db: Session = Depends(get_db)):
         counts[model.__tablename__] = {k: v for k, v in rows}
     enabled = bool(common.get_setting(db, "livelab_enabled", False))
     return {
-        "mode": "public_preview" if cfg.public_preview else "local",
+        "mode": "public_preview" if cfg.public_preview else ("hosted_demo" if cfg.serverless else "local"),
         "bind_host": cfg.bind_host,
         "simulation": {"probe_interval_s": cfg.sim_probe_interval_seconds, "deterministic": True},
         "integrations": {
@@ -300,6 +300,8 @@ def settings_view(db: Session = Depends(get_db)):
 @router.post("/settings/livelab", dependencies=[Depends(require_mutations)])
 def livelab_toggle(body: s.LiveLabToggleIn, db: Session = Depends(get_write_db), who: str = Depends(actor)):
     from ..livelab import manager
+    if get_settings().serverless:
+        raise common.DomainError("unavailable_hosted", "The live-lab target runs a local process and is not available in the hosted demo. Run RackOps Lab locally to use it.", 409)
     common.set_setting(db, "livelab_enabled", body.enabled)
     if body.enabled:
         if not db.scalar(select(m.Device).where(m.Device.display_id == "livelab-target")):
@@ -447,13 +449,22 @@ async def events(request: Request, last_event_id: Optional[int] = Query(None), l
             rows = db.scalars(select(m.StreamEvent).where(m.StreamEvent.id > after).order_by(m.StreamEvent.id).limit(200)).all()
             return [(r.id, r.topic, r.payload) for r in rows]
 
+    serverless = get_settings().serverless
+
     async def gen():
+        import time
+        from ..runner import lazy_tick
         cursor = start if start is not None else await asyncio.to_thread(latest_id)
         yield f"retry: 2000\nid: {cursor}\nevent: hello\ndata: {json.dumps({'resume_from': cursor})}\n\n"
         idle = 0.0
+        opened = time.monotonic()
         while True:
             if await request.is_disconnected():
                 break
+            if serverless:
+                if time.monotonic() - opened > 50:  # stay under the function duration limit; EventSource reconnects
+                    break
+                await asyncio.to_thread(lazy_tick)
             rows = await asyncio.to_thread(fetch, cursor)
             for eid, topic, payload in rows:
                 cursor = eid

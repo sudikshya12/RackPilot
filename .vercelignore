@@ -1,0 +1,9 @@
+media/
+docs/screenshots/
+backend/.venv/
+backend/data/
+backend/tests/
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/
