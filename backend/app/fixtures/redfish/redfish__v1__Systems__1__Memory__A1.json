@@ -1,0 +1,10 @@
+{
+  "Id": "A1",
+  "DeviceLocator": "A1",
+  "CapacityMiB": 16384,
+  "MemoryDeviceType": "DDR5",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  }
+}

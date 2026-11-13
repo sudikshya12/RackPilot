@@ -1,0 +1,11 @@
+{
+  "Id": "nvme0n1",
+  "Model": "NL-NVME-960 (fictional)",
+  "CapacityBytes": 960197124096,
+  "Protocol": "NVMe",
+  "MediaType": "SSD",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  }
+}

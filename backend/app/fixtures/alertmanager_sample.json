@@ -1,0 +1,14 @@
+{
+  "version": "4",
+  "status": "firing",
+  "receiver": "rackops-lab",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {"alertname": "NodeFilesystemAlmostFull", "instance": "sample-node-01:9100", "mountpoint": "/var", "severity": "minor"},
+      "annotations": {"summary": "Imported sample: filesystem /var almost full", "description": "Bundled example Alertmanager payload (IMPORTED SAMPLE). It does not describe any device in this lab."},
+      "startsAt": "2026-11-10T14:02:11Z",
+      "fingerprint": "sample-fs-var-0001"
+    }
+  ]
+}

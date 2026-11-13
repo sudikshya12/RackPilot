@@ -1,0 +1,32 @@
+{
+  "@odata.id": "/redfish/v1/Systems/1",
+  "Id": "1",
+  "Name": "Fixture system (DMTF-style mockup)",
+  "Manufacturer": "Northwind Lab Hardware (fictional)",
+  "Model": "NL-1U-Compute",
+  "SerialNumber": "SIM-NL1U-0006",
+  "BiosVersion": "1.4.2-sim",
+  "PowerState": "On",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK",
+    "HealthRollup": "OK"
+  },
+  "ProcessorSummary": {
+    "Count": 2,
+    "Model": "Northwind NX-16 (fictional) 16-core",
+    "CoreCount": 32
+  },
+  "MemorySummary": {
+    "TotalSystemMemoryGiB": 64
+  },
+  "Memory": {
+    "@odata.id": "/redfish/v1/Systems/1/Memory"
+  },
+  "EthernetInterfaces": {
+    "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces"
+  },
+  "Storage": {
+    "@odata.id": "/redfish/v1/Systems/1/Storage"
+  }
+}

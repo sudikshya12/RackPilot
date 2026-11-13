@@ -1,0 +1,19 @@
+{
+  "Members": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Memory/A1"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Memory/A2"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Memory/A3"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Memory/A4"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Memory/B1"
+    }
+  ]
+}

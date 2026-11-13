@@ -1,0 +1,10 @@
+{
+  "Members": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/eno1"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/eth1"
+    }
+  ]
+}

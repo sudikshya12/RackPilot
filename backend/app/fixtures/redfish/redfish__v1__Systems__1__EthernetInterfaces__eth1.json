@@ -1,0 +1,9 @@
+{
+  "Id": "eth1",
+  "MACAddress": "02:00:5e:10:01:26",
+  "SpeedMbps": 1000,
+  "LinkStatus": "LinkUp",
+  "Oem": {
+    "RackOpsRole": "data"
+  }
+}

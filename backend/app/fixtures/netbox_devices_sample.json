@@ -1,0 +1,4 @@
+{"count": 2, "next": null, "previous": null, "results": [
+  {"id": 101, "name": "sample-edge-01", "device_type": {"model": "Example 1U", "manufacturer": {"name": "Example Vendor"}}, "status": {"value": "planned"}},
+  {"id": 102, "name": "sample-edge-02", "device_type": {"model": "Example 1U", "manufacturer": {"name": "Example Vendor"}}, "status": {"value": "planned"}}
+]}

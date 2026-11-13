@@ -1,0 +1,11 @@
+{
+  "Id": "1",
+  "Drives": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/1/Drives/0"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/1/Drives/1"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceptance report {{ run.display_id }} — {{ run.hostname }}</title>
+<style>
+  :root { --ink:#172033; --muted:#5E6B7E; --line:#DDE3EA; --accent:#087F8C; --ok:#18794E; --bad:#C93644; --warn:#A65D00; }
+  * { box-sizing: border-box; }
+  body { font: 13px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); margin: 0; background: #F5F7FA; }
+  main { max-width: 900px; margin: 24px auto; background: #fff; border: 1px solid var(--line); padding: 32px 36px; }
+  h1 { font-size: 20px; margin: 0 0 2px; } h2 { font-size: 14px; margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 600; font-size: 11px; border: 1px solid currentColor; }
+  .PASS { color: var(--ok); } .FAIL { color: var(--bad); } .MANUAL_REVIEW, .UNSUPPORTED, .SKIPPED, .ERROR { color: var(--warn); }
+  .disp { font-size: 22px; font-weight: 700; } .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; } .src { background: #EEF3F7; padding: 2px 6px; border-radius: 4px; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #F5F7FA; border: 1px solid var(--line); padding: 8px; margin: 4px 0 0; max-height: none; }
+  .banner { border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 12px 0; background: #F7FBFB; }
+  .check { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; vertical-align: -2px; margin-right: 8px; }
+  @media print { body { background: #fff; } main { border: 0; margin: 0; padding: 0; max-width: none; } .noprint { display: none; } details { display: block; } details > summary { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="noprint" style="text-align:right"><button onclick="window.print()">Print / save PDF</button></div>
+  <div class="k">RackOps Lab · Server acceptance report · Independent interview lab</div>
+  <h1>{{ run.hostname }} — run #{{ run.run_number }} <span class="mono" style="color:var(--muted)">{{ run.display_id }}</span></h1>
+  <div class="banner">
+    Source: <b class="src mono">{{ run.source_type }}</b> <span class="mono">{{ run.source_id }}</span> · Collector: <b>{{ run.collector }}</b><br>
+    {% if run.source_type == 'SIMULATED' %}Results come from the simulator's modeled hardware, not from a physical machine.{% elif run.source_type == 'IMPORTED_SAMPLE' %}Results come from an imported sample observation set.{% else %}Results come from observations collected on lab equipment.{% endif %}
+    This report is generated from the persisted run record.
+  </div>
+  <div class="grid">
+    <div><div class="k">Disposition</div><div class="disp {{ run.disposition }}">{{ run.disposition | replace('_',' ') }}</div>
+      {% if run.effective_disposition != run.disposition %}<div class="k">After manual review: <b class="{{ run.effective_disposition }}">{{ run.effective_disposition | replace('_',' ') }}</b></div>{% endif %}</div>
+    <div><div class="k">Asset / serial</div><div class="mono">{{ run.expected_snapshot.asset_tag }}<br>{{ run.expected_snapshot.serial_number }}</div></div>
+    <div><div class="k">Completed (UTC)</div><div class="mono">{{ run.completed_at or 'not completed' }}</div></div>
+    <div><div class="k">Operator · Profile</div><div>{{ run.operator }}<br><span class="mono">{{ run.profile_snapshot.key }} v{{ run.profile_snapshot.version }}</span></div></div>
+  </div>
+
+  <h2>Expected vs observed</h2>
+  <table>
+    <thead><tr><th>Check</th><th>Req.</th><th>Expected</th><th>Observed</th><th>Unit</th><th>Result</th></tr></thead>
+    <tbody>
+    {% for r in run.results %}
+      <tr><td>{{ r.check_name }} <span class="mono" style="color:var(--muted)">v{{ r.check_version }}</span></td><td>{{ 'Required' if r.required else 'Optional' }}</td>
+        <td class="mono">{{ r.expected_value if r.expected_value is not none else '—' }}</td><td class="mono">{{ r.observed_value if r.observed_value is not none else 'Not collected' }}</td>
+        <td>{{ r.unit or '' }}</td><td><span class="pill {{ r.result }}">{{ r.result | replace('_',' ') }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% set failures = run.results | selectattr('result', 'ne', 'PASS') | list %}
+  {% if failures %}
+  <h2>Failure and review details</h2>
+  {% for r in failures %}
+    <p><b class="{{ r.result }}">{{ r.result | replace('_',' ') }}</b>: <b>{{ r.check_name }}</b>. {{ r.detail }}
+    {% if run.manual_reviews.get(r.check_key) %}<br><i>Manual review: {{ run.manual_reviews[r.check_key].decision }} by {{ run.manual_reviews[r.check_key].by }} at {{ run.manual_reviews[r.check_key].at }}: {{ run.manual_reviews[r.check_key].note }}</i>{% endif %}</p>
+  {% endfor %}
+  {% endif %}
+
+  {% if run.corrections_before_run %}
+  <h2>Corrections recorded before this run</h2>
+  <ul>{% for c in run.corrections_before_run %}<li>{{ c.label }}: <span class="src mono">{{ c.source_type }}</span> <span class="mono">{{ c.applied_at }}</span> by {{ c.actor }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if run.follow_up_actions %}
+  <h2>Follow-up actions</h2>
+  <ul>{% for a in run.follow_up_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <h2>Provisioning handoff checklist</h2>
+  {% if run.effective_disposition == 'PASS' %}
+    {% for k, label in checklist.items() %}<div style="margin:4px 0"><span class="check"></span>{{ label }}</div>{% endfor %}
+    <p class="k">Intake status: {{ intake_status | replace('_',' ') }}</p>
+  {% else %}
+    <p>Not eligible for handoff: disposition is {{ run.effective_disposition | replace('_',' ') }}.</p>
+  {% endif %}
+
+  <h2>Evidence</h2>
+  {% for r in run.results %}{% if r.evidence %}
+    <details><summary>{{ r.check_name }}</summary>
+      <div class="mono" style="color:var(--muted)">{{ r.evidence.display_id }} · {{ r.evidence.command }} · {{ r.evidence.source_type }} · {{ r.evidence.collected_at }}</div>
+      <pre class="mono">{{ r.evidence.output }}</pre>
+    </details>
+  {% endif %}{% endfor %}
+  <p class="k" style="margin-top:28px">Generated by RackOps Lab, an independent interview lab. Not affiliated with any employer or production facility.</p>
+</main>
+</body>
+</html>
